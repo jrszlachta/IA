@@ -3,7 +3,7 @@
 
 unsigned int tamanho_lista(lista l) { return l->tamanho; }
 
-no primeiro_no(lista l) { return l->primeiro; }
+no primeiro_no(lista l) { return l->primeiro ? l->primeiro : NULL; }
 
 void *conteudo(no n) { return n->conteudo; }
 

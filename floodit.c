@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <time.h>
 #include "floodit.h"
+#include "lista.h"
+#include "grafo.h"
 
 void gera_mapa(tmapa *m, int semente) {
   int i, j;
@@ -87,35 +89,87 @@ void pinta_mapa(tmapa *m, int cor) {
     return;
   pinta(m, 0, 0, m->mapa[0][0], cor);
 }
-/*
-int main(int argc, char **argv) {
-  int cor;
-  tmapa m;
-  int semente;
 
-  if(argc < 4 || argc > 5) {
-    printf("uso: %s <numero_de_linhas> <numero_de_colunas> <numero_de_cores> [<semente_aleatoria>]\n", argv[0]);
-    exit(1);
-  }
-
-  m.nlinhas = atoi(argv[1]);
-  m.ncolunas = atoi(argv[2]);
-  m.ncores = atoi(argv[3]);
-
-  if(argc == 5)
-    semente = atoi(argv[4]);
-  else
-    semente = -1;
-  gera_mapa(&m, semente);
-  mostra_mapa_cor(&m);
-
-  scanf("%d", &cor);
-  while(cor > 0 && cor <= m.ncores) {
-    pinta_mapa(&m, cor);
-    mostra_mapa_cor(&m); // para mostrar sem cores use mostra_mapa(&m);
-    scanf("%d", &cor);
-  }
-
-  return 0;
+void enfila(tmapa *m, int l, int c, grafo g, vertice u) {
+	int ok = 1;
+	posicao p;
+	for (no n = primeiro_no(enfilados); n; n = proximo_no(n)) {
+		p = (posicao) conteudo(n);
+		ok &= (p->l != l && p->c != c);
+	}
+	if (ok) {
+		p = malloc(sizeof(struct posicao));
+		vertice v = cria_vertice(g, m->mapa[l][c], 0, 0);
+		if (u != NULL) { cria_adjacente(g, u, v); }
+		p->l = l;
+		p->c = c;
+		p->v = v;
+		insere_lista(p, enfilados);
+	}
 }
-*/
+
+posicao desenfila(void) {
+	posicao p = NULL;
+	no remover;
+	for(no n = primeiro_no(enfilados); n; n = proximo_no(n))
+		if (proximo_no(n) == NULL) {
+			p = (posicao) conteudo(n);
+			remover = n;
+		}
+	remove_no(enfilados, remover, NULL);
+	return p;
+}
+
+void vertifica(tmapa *m, vertice v, int l, int c, int cor, grafo g) {
+	if (m->mapa[l][c] < 0) {
+		int rot = m->mapa[l][c];
+		no n, m;
+		posicao p;
+		for(n =  primeiro_no(enfilados); n; n = proximo_no(n)) {
+			p = (posicao) conteudo(n);
+			m = n;
+			remove_no(enfilados, n, NULL);
+		}
+		destroi_vertice(g, m);
+		free(p);
+		return;
+	}
+	v->area++;
+	m->mapa[l][c] = rotulo;
+	if(l < m->nlinhas - 1)
+		if (m->mapa[l+1][c] == cor)
+			vertifica(m, v, l+1, c, cor, g);
+		else if (m->mapa[l+1][c] > 0)
+			enfila(m, l, c, g, v);
+	if(c < m->ncolunas - 1)
+		if (m->mapa[l][c+1] == cor)
+			vertifica(m, v, l, c+1, cor, g);
+		else if (m->mapa[l][c+1] > 0)
+			enfila(m, l, c, g, v);
+	if(l > 0)
+		if (m->mapa[l-1][c] == cor)
+			vertifica(m, v, l-1, c, cor, g);
+		else if (m->mapa[l-1][c] > 0)
+			enfila(m, l, c, g, v);
+	if(c > 0)
+		if (m->mapa[l][c-1] == cor)
+			vertifica(m, v, l, c-1, cor, g);
+		else if (m->mapa[l][c-1] > 0)
+			enfila(m, l, c, g, v);
+}
+
+grafo map_to_graph(tmapa *m) {
+	grafo g = constroi_grafo();
+	enfilados = constroi_lista();
+	enfila(m, 0, 0, g, NULL);
+	rotulo = -1;
+	while (tamanho_lista(enfilados) > 0) {
+		posicao p = desenfila();
+		p->v->rotulo = rotulo;
+		vertifica(m, p->v, p->l, p->c, p->v->cor, g);
+		free(p);
+		rotulo--;
+	}
+	free(enfilados);
+	return g;
+}

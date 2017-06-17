@@ -9,22 +9,24 @@ typedef struct grafo *grafo;
 struct grafo {
     lista vertices;
     int n_vertices;
+	int n_pintados;
 	int n_arestas;
 };
 
 typedef struct vertice *vertice;
 
 struct vertice {
-    lista arestas;
+    lista adjacentes;
 	int cor;
 	int area;
+	int rotulo;
     int visitado;
 	int pintado;
 };
-typedef struct aresta *aresta;
+typedef struct adjacente *adjacente;
 
-struct aresta {
-	vertice u, v;
+struct adjacente {
+	vertice v;
 };
 
 lista vizinhanca(vertice v);
@@ -35,17 +37,19 @@ grafo constroi_grafo(void);
 
 int destroi_grafo(grafo g);
 
-int destroi_vertice(void *v);
+int destroi_vertice(void *g, void *n);
 
-int destroi_aresta(void *a);
+int destroi_adjacente(void *v, void *a);
 
-int cria_vertice(grafo g, int cor, int area);
+vertice cria_vertice(grafo g, int cor, int area, int rotulo);
 
-int cria_aresta(grafo g, vertice u, vertice v);
+adjacente cria_adjacente(grafo g, vertice u, vertice v);
 
 int desvisita(grafo g);
 
 grafo copia_grafo(grafo g);
+
+void imprime_grafo(grafo g);
 
 #endif
 
