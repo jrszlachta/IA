@@ -30,5 +30,9 @@ void pinta_mapa(tmapa *m, int cor);
 void enfila(tmapa *m, int l, int c, grafo g, vertice u);
 void vertifica(tmapa *m, vertice v, int l, int c, int cor, grafo g);
 grafo map_to_graph(tmapa *m);
+void limpa_busca(grafo g);
+void pinta_grafo(grafo g, lista l, int cor);
+int busca_mais_comum(grafo g, lista l, int* areas);
+lista guloso(grafo g);
 
 #endif

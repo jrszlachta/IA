@@ -4,6 +4,16 @@
 #include "grafo.h"
 #include "floodit.h"
 
+lista inverte_lista(lista l) {
+	lista k = constroi_lista();
+	for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+		int *aux = (int *) conteudo(n);
+		insere_lista(aux, k);
+	}
+	destroi_lista(l, NULL);
+	return k;
+}
+
 int main(int argc, char **argv) {
   int cor;
   tmapa m;
@@ -26,7 +36,20 @@ int main(int argc, char **argv) {
   mostra_mapa_cor(&m);
 
   grafo g = map_to_graph(&m);
-  imprime_grafo(g);
+  lista l;
+  l = guloso(g);
+  l = inverte_lista(l);
+  printf("\n");
+  for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+	int *aux =  (int *)  conteudo(n);
+	printf("%d ", *aux);
+	free(aux);
+  }
+  printf("\n Num Passos: %d\n", tamanho_lista(l));
+  destroi_lista(l, NULL);
+  //imprime_grafo(g);
+
+  destroi_grafo(g);
 
   return 0;
 }

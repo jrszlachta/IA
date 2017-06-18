@@ -31,11 +31,13 @@ int destroi_vertice(void *g, void *node) {
 	grafo G = (grafo) g;
 	no m = (no) node;
 	vertice v = (vertice) conteudo(m);
-	for (no n = primeiro_no(v->adjacentes); n; n = proximo_no(n)) {
-		adjacente a = (adjacente) conteudo(n);
-		destroi_adjacente(v, a);
+	if (v->adjacentes) {
+		for (no n = primeiro_no(v->adjacentes); n; n = proximo_no(n)) {
+			adjacente a = (adjacente) conteudo(n);
+			destroi_adjacente(v, a);
+		}
+		if (destroi_lista(v->adjacentes, NULL) == 0) return 0;
 	}
-	if (destroi_lista(v->adjacentes, NULL) == 0) return 0;
 	remove_no(G->vertices, m, NULL);
 	free(v);
 	if (v) return 0;
@@ -48,8 +50,10 @@ int destroi_adjacente(void *v, void *a) {
 	vertice V = (vertice) v;
 	for (no n = primeiro_no(U->adjacentes); n; n = proximo_no(n)) {
 		adjacente B = (adjacente) conteudo(n);
-		if (B->v == V)
+		if (B->v == V) {
+			remove_no(U->adjacentes, n, NULL);
 			free(B);
+		}
 	}
 	free(A);
 	if (A) return 0;
@@ -70,6 +74,11 @@ vertice cria_vertice(grafo g, int cor, int area, int rotulo) {
 }
 
 adjacente cria_adjacente(grafo g, vertice u, vertice v) {
+	for (no n = primeiro_no(v->adjacentes); n; n = proximo_no(n)) {
+		adjacente k = (adjacente) conteudo(n);
+		if (u->rotulo == k->v->rotulo)
+			return k;
+	}
 	adjacente a = malloc(sizeof(struct adjacente));
 	adjacente b = malloc(sizeof(struct adjacente));
 	if (!a || !b) return NULL;
@@ -89,13 +98,34 @@ int desvisita(grafo g) {
 	g->n_pintados = 0;
 }
 
+no busca_vertice(grafo g, vertice v) {
+	vertice w;
+	for (no n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
+		w = (vertice) conteudo(n);
+		if (w == v)
+			return n;
+	}
+	return NULL;
+}
+
+vertice busca_por_rotulo(grafo g, int rot) {
+	vertice v;
+	for (no n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
+		v = (vertice) conteudo(n);
+		if (v->rotulo == rot)
+			return v;
+	}
+	return NULL;
+}
+
 void imprime_grafo(grafo g) {
     no n, m;
     if (!g) return;
     printf("strict graph G {\n");
     for (n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
         vertice v = (vertice) conteudo(n);
-        printf("\t\"%d\" [label=\"cor=%d\"];\n", abs(v->rotulo), v->cor);                                        }
+        printf("\t\"%d\" [label=\"cor=%d, p=%d, v=%d\"];\n", abs(v->rotulo), v->cor, v->pintado, v->visitado);
+	}
     for (n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
         vertice v = (vertice) conteudo(n);
         for (m = primeiro_no(v->adjacentes); m; m = proximo_no(m)) {
@@ -103,4 +133,14 @@ void imprime_grafo(grafo g) {
             printf("\t\"%d\" -- \"%d\";\n", abs(v->rotulo), abs(a->v->rotulo));
         }
     }
+	printf("}\n");
+}
+
+void atualiza_info(grafo g) {
+	for (no n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
+		vertice v = (vertice) conteudo(n);
+		g->n_vertices++;
+		g->n_arestas += tamanho_lista(v->adjacentes);
+	}
+	g->n_arestas /= 2;
 }

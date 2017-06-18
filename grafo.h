@@ -5,15 +5,18 @@
 #include "lista.h"
 
 typedef struct grafo *grafo;
+typedef struct vertice *vertice;
+typedef struct adjacente *adjacente;
 
 struct grafo {
     lista vertices;
+	vertice primeiro;
     int n_vertices;
 	int n_pintados;
 	int n_arestas;
+	int n_cores;
 };
 
-typedef struct vertice *vertice;
 
 struct vertice {
     lista adjacentes;
@@ -23,7 +26,6 @@ struct vertice {
     int visitado;
 	int pintado;
 };
-typedef struct adjacente *adjacente;
 
 struct adjacente {
 	vertice v;
@@ -49,7 +51,13 @@ int desvisita(grafo g);
 
 grafo copia_grafo(grafo g);
 
+no busca_vertice(grafo g, vertice v);
+
+vertice busca_por_rotulo(grafo g, int rot);
+
 void imprime_grafo(grafo g);
+
+void atualiza_info(grafo g);
 
 #endif
 
