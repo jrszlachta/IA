@@ -4,7 +4,7 @@
 #include "grafo.h"
 #include "floodit.h"
 
-lista inverte_lista(lista l) {
+/*lista inverte_lista(lista l) {
 	lista k = constroi_lista();
 	for (no n = primeiro_no(l); n; n = proximo_no(n)) {
 		int *aux = (int *) conteudo(n);
@@ -12,14 +12,14 @@ lista inverte_lista(lista l) {
 	}
 	destroi_lista(l, NULL);
 	return k;
-}
+}*/
 
 int main(int argc, char **argv) {
   int cor;
   tmapa m;
   int semente;
 
-  if(argc < 4 || argc > 5) {
+  /*if(argc < 4 || argc > 5) {
     printf("uso: %s <numero_de_linhas> <numero_de_colunas> <numero_de_cores> [<semente_aleatoria>]\n", argv[0]);
     exit(1);
   }
@@ -32,24 +32,43 @@ int main(int argc, char **argv) {
     semente = atoi(argv[4]);
   else
     semente = -1;
-  gera_mapa(&m, semente);
-  mostra_mapa_cor(&m);
-
+  gera_mapa(&m, semente);*/
+  carrega_mapa(&m);
   grafo g = map_to_graph(&m);
   lista l;
   l = guloso(g);
   l = inverte_lista(l);
-  printf("\n");
+  printf("%d\n", tamanho_lista(l));
   for (no n = primeiro_no(l); n; n = proximo_no(n)) {
 	int *aux =  (int *)  conteudo(n);
 	printf("%d ", *aux);
 	free(aux);
   }
-  printf("\n Num Passos: %d\n", tamanho_lista(l));
+  printf("\n");
   destroi_lista(l, NULL);
-  //imprime_grafo(g);
+
+  l = guloso2(g);
+  l = inverte_lista(l);
+  printf("%d\n", tamanho_lista(l));
+  for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+	int *aux =  (int *)  conteudo(n);
+	printf("%d ", *aux);
+	free(aux);
+  }
+  printf("\n");
+  destroi_lista(l, NULL);
+
+  l = guloso3(g);
+  l = inverte_lista(l);
+  printf("%d\n", tamanho_lista(l));
+  for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+	int *aux =  (int *)  conteudo(n);
+	printf("%d ", *aux);
+	free(aux);
+  }
+  printf("\n");
+  destroi_lista(l, NULL);
 
   destroi_grafo(g);
-
   return 0;
 }

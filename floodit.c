@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <math.h>
 #include "floodit.h"
 #include "lista.h"
 #include "grafo.h"
@@ -215,10 +216,10 @@ grafo map_to_graph(tmapa *m) {
 	return g;
 }
 
-void limpa_busca(grafo g) {
+void limpa_busca(grafo g, int estado) {
 	for (no n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
 		vertice v = (vertice) conteudo(n);
-		if(v->visitado == 1) v->visitado = 0;
+		if(v->visitado == estado) v->visitado = 0;
 	}
 }
 
@@ -228,9 +229,9 @@ void pinta_grafo(grafo g, lista l, int cor) {
 		v->pintado = cor;
 		for (no m = primeiro_no(v->adjacentes); m; m = proximo_no(m)) {
 			adjacente a = (adjacente) conteudo(m);
-			if (a->v->cor == cor && a->v->visitado != 2) {
+			if (a->v->cor == cor && a->v->visitado != 3) {
 				a->v->pintado = cor;
-				a->v->visitado = 2;
+				a->v->visitado = 3;
 				insere_lista(a->v, l);
 			}
 		}
@@ -256,7 +257,7 @@ int busca_mais_comum(grafo g, lista l, int *areas) {
 		}
 		areas[i-1] = 0;
 	}
-	limpa_busca(g);
+	limpa_busca(g, 1);
 	return cor;
 }
 
@@ -271,7 +272,7 @@ lista guloso (grafo g) {
 		area_cor[i-1] = 0;
 
 	g->primeiro->pintado = g->primeiro->cor;
-	g->primeiro->visitado = 2;
+	g->primeiro->visitado = 3;
 	insere_lista(g->primeiro, pintados);
 
 	while (tamanho_lista(pintados) < tamanho_lista(g->vertices)) {
@@ -279,7 +280,264 @@ lista guloso (grafo g) {
 		*cor_mais_comum = busca_mais_comum(g, pintados, area_cor);
 		pinta_grafo(g, pintados, *cor_mais_comum);
 		insere_lista(cor_mais_comum, cores);
-		//imprime_grafo(g);
 	}
+	limpa_busca(g, 3);
 	return cores;
 }
+
+int pinta_parcial(grafo g, lista l, int cor, int estado) {
+	int area = 0;
+	for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+		vertice v = (vertice) conteudo(n);
+		v->pintado = cor;
+		for (no m = primeiro_no(v->adjacentes); m; m = proximo_no(m)) {
+			adjacente a = (adjacente) conteudo(m);
+			if (a->v->cor == cor && a->v->visitado == 0) {
+				area += a->v->area;
+				a->v->pintado = cor;
+				a->v->visitado = estado;
+				insere_lista(a->v, l);
+			}
+		}
+	}
+	return area;
+}
+
+void cores_vizinhos(lista l, int *cores) {
+	for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+		vertice v = (vertice) conteudo(n);
+		for (no m = primeiro_no(v->adjacentes); m; m = proximo_no(m)) {
+			adjacente a = (adjacente) conteudo(m);
+			if (a->v->visitado == 0)
+				cores[a->v->cor-1] = 1;
+		}
+	}
+}
+
+static int verifica_fim(grafo g) {
+	int ok = 1;
+	for (no n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
+		vertice v = (vertice) conteudo(n);
+		ok &= (v->visitado == 3);
+	}
+	//printf("%s\n", ok ? "Ok" : "No");
+	return ok;
+}
+
+lista guloso2 (grafo g) {
+	lista pintados = constroi_lista();
+	lista cores = constroi_lista();
+	int ncores = g->n_cores;
+	int *cor;
+	int *a_pintar = malloc(sizeof(2));
+	int *area_cor1 = malloc(sizeof(int)*ncores);
+	int *area_cor2 = malloc(sizeof(int)*ncores);
+	int *cor_vizinho1 = malloc(sizeof(int)*ncores);
+	int *cor_vizinho2 = malloc(sizeof(int)*ncores);
+
+	g->primeiro->pintado = g->primeiro->cor;
+	g->primeiro->visitado = 3;
+	insere_lista(g->primeiro, pintados);
+
+	while (tamanho_lista(pintados) < tamanho_lista(g->vertices)) {
+		int max = 0;
+		a_pintar[0] = 0; a_pintar[1] = 0;
+		for (int i = 0; i < ncores; i++) {
+			area_cor1[i] = 0;
+			cor_vizinho1[i] = 0;
+		}
+		cores_vizinhos(pintados, cor_vizinho1);
+		for (int i = 1; i <= ncores; i++) {
+			if (cor_vizinho1[i-1] == 1) {
+				lista pintados1 = copia_lista(pintados);
+				area_cor1[i-1] = pinta_parcial(g, pintados1, i, 1);
+				//printf("tamanho1 %d < %d\n", tamanho_lista(pintados1), tamanho_lista(g->vertices));
+				if (tamanho_lista(pintados1) < tamanho_lista(g->vertices)) {
+					for (int j = 0; j < ncores; j++) {
+						area_cor2[j] = 0;
+						cor_vizinho2[j] = 0;
+					}
+					cores_vizinhos(pintados1, cor_vizinho2);
+					lista pintados2;
+					for (int j = 1; j <= ncores; j++) {
+						if (cor_vizinho2[j-1] == 1) {
+							pintados2 = copia_lista(pintados1);
+							if (i != j) {
+								area_cor2[j-1] = pinta_parcial(g, pintados2, j, 2);
+								//printf("tamanho2 %d < %d\n", tamanho_lista(pintados2), tamanho_lista(g->vertices));
+								if (area_cor1[i-1] + area_cor2[j-1] > max) {
+									max = area_cor1[i-1] + area_cor2[j-1];
+									a_pintar[0] = i;
+									a_pintar[1] = j;
+								}
+							}
+							limpa_busca(g, 2);
+						}
+					}
+					if (pintados2) destroi_lista(pintados2, NULL);
+				} else {
+					//printf("No Else: cor %d\n", i);
+					a_pintar[0] = i;
+					a_pintar[1] = 0;
+					if (pintados1) destroi_lista(pintados1, NULL);
+					break;
+				}
+				limpa_busca(g, 1);
+				if (pintados1) destroi_lista(pintados1, NULL);
+			}
+		}
+
+		//printf("Cores %d, %d\n", a_pintar[0], a_pintar[1]);
+		cor = malloc(sizeof(int));
+		*cor = a_pintar[0];
+		pinta_grafo(g, pintados, *cor);
+		insere_lista(cor, cores);
+		if (a_pintar[1] != 0) {
+			cor = malloc(sizeof(int));
+			*cor = a_pintar[1];
+		   	pinta_grafo(g, pintados, *cor);
+			insere_lista(cor, cores);
+		}
+		//printf("Pintados %d\n", tamanho_lista(pintados));
+	}
+
+	free(area_cor1);
+	free(area_cor2);
+
+	//imprime_grafo(g);
+
+	limpa_busca(g, 3);
+	return cores;
+}
+
+static int busca_maior_area(grafo g, lista l, int *max) {
+	int cor;
+	int *areas = malloc(sizeof(int)*g->n_cores);
+	for (int i = 0; i < g->n_cores; i++) {
+		areas[i] = 0;
+	}
+   	*max = 0;
+	for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+		vertice v = (vertice) conteudo(n);
+		for (no m = primeiro_no(v->adjacentes); m; m = proximo_no(m)) {
+			adjacente a = (adjacente) conteudo(m);
+			if (a->v->visitado == 0) {
+				areas[a->v->cor-1] += a->v->area;
+				a->v->visitado = 5;
+			}
+		}
+	}
+	for (int i = 1; i <= g->n_cores; i++) {
+		if (areas[i-1] > *max) {
+			cor = i;
+			*max = areas[i-1];
+		}
+		areas[i-1] = 0;
+	}
+	limpa_busca(g, 5);
+	free(areas);
+	return cor;
+}
+
+lista guloso3 (grafo g) {
+	lista pintados = constroi_lista();
+	lista cores = constroi_lista();
+	int ncores = g->n_cores;
+	int *cor;
+	int *a_pintar = malloc(sizeof(3));
+	int *area_cor1 = malloc(sizeof(int)*ncores);
+	int *area_cor2 = malloc(sizeof(int)*ncores);
+	int *cor_vizinho1 = malloc(sizeof(int)*ncores);
+	int *cor_vizinho2 = malloc(sizeof(int)*ncores);
+
+	g->primeiro->pintado = g->primeiro->cor;
+	g->primeiro->visitado = 3;
+	insere_lista(g->primeiro, pintados);
+
+	while (tamanho_lista(pintados) < tamanho_lista(g->vertices)) {
+		int max = 0;
+		a_pintar[0] = 0; a_pintar[1] = 0; a_pintar[2] = 0;
+		for (int i = 0; i < ncores; i++) {
+			area_cor1[i] = 0;
+			cor_vizinho1[i] = 0;
+		}
+		cores_vizinhos(pintados, cor_vizinho1);
+		for (int i = 1; i <= ncores; i++) {
+			if (cor_vizinho1[i-1] == 1) {
+				lista pintados1 = copia_lista(pintados);
+				area_cor1[i-1] = pinta_parcial(g, pintados1, i, 1);
+				if (tamanho_lista(pintados1) < tamanho_lista(g->vertices)) {
+					for (int j = 0; j < ncores; j++) {
+						area_cor2[j] = 0;
+						cor_vizinho2[j] = 0;
+					}
+					cores_vizinhos(pintados1, cor_vizinho2);
+					lista pintados2;
+					for (int j = 1; j <= ncores; j++) {
+						if (cor_vizinho2[j-1] == 1) {
+							pintados2 = copia_lista(pintados1);
+							if (i != j) {
+								area_cor2[j-1] = pinta_parcial(g, pintados2, j, 2);
+								int *max3 = malloc(sizeof(int));
+								*max3 = 0;
+								int cor3 = 0;
+								if (tamanho_lista(pintados2) < tamanho_lista(g->vertices)) {
+									lista pintados3 = copia_lista(pintados2);
+									cor3 = busca_maior_area(g, pintados3, max3);
+									if (pintados3) destroi_lista(pintados3, NULL);
+									if (area_cor1[i-1] + area_cor2[j-1] + *max3 > max) {
+										max = area_cor1[i-1] + area_cor2[j-1] + *max3;
+										a_pintar[0] = i;
+										a_pintar[1] = j;
+										a_pintar[2] = cor3;
+									}
+								} else if (area_cor1[i-1] + area_cor2[j-1] > max) {
+									max = area_cor1[i-1] + area_cor2[j-1];
+									a_pintar[0] = i;
+									a_pintar[1] = j;
+									a_pintar[2] = 0;
+								}
+								free(max3);
+							}
+							limpa_busca(g, 2);
+						}
+					}
+					if (pintados2) destroi_lista(pintados2, NULL);
+				} else {
+					a_pintar[0] = i;
+					a_pintar[1] = 0;
+					a_pintar[2] = 0;
+					if (pintados1) destroi_lista(pintados1, NULL);
+					break;
+				}
+				limpa_busca(g, 1);
+				if (pintados1) destroi_lista(pintados1, NULL);
+			}
+		}
+
+
+		cor = malloc(sizeof(int));
+		*cor = a_pintar[0];
+		pinta_grafo(g, pintados, *cor);
+		insere_lista(cor, cores);
+		if (a_pintar[1] != 0) {
+			cor = malloc(sizeof(int));
+			*cor = a_pintar[1];
+		   	pinta_grafo(g, pintados, *cor);
+			insere_lista(cor, cores);
+		}
+		if (a_pintar[2] != 0) {
+			cor = malloc(sizeof(int));
+			*cor = a_pintar[2];
+		   	pinta_grafo(g, pintados, *cor);
+			insere_lista(cor, cores);
+		}
+	}
+
+	free(area_cor1);
+	free(area_cor2);
+
+	limpa_busca(g, 3);
+	return cores;
+}
+

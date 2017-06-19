@@ -69,6 +69,8 @@ vertice cria_vertice(grafo g, int cor, int area, int rotulo) {
 	v->rotulo = rotulo;
 	v->visitado = 0;
 	v->pintado = 0;
+	v->rot_pai = 0;
+	v->distancia = 0;
 	if (insere_lista(v, g->vertices) == NULL) return NULL;
 	return v;
 }
@@ -124,7 +126,7 @@ void imprime_grafo(grafo g) {
     printf("strict graph G {\n");
     for (n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
         vertice v = (vertice) conteudo(n);
-        printf("\t\"%d\" [label=\"cor=%d, p=%d, v=%d\"];\n", abs(v->rotulo), v->cor, v->pintado, v->visitado);
+        printf("\t\"%d\" [label=\"cor=%d, dist=%d\"];\n", abs(v->rotulo), v->cor, v->distancia);
 	}
     for (n = primeiro_no(g->vertices); n; n = proximo_no(n)) {
         vertice v = (vertice) conteudo(n);

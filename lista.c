@@ -9,6 +9,15 @@ void *conteudo(no n) { return n->conteudo; }
 
 no proximo_no(no n) { return n->proximo; }
 
+no ultimo_no(lista l) {
+	no ultimo;
+	for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+		if (proximo_no(n) == NULL)
+			ultimo = n;
+	}
+	return ultimo;
+}
+
 lista constroi_lista(void) {
   lista l = malloc(sizeof(struct lista));
   if ( ! l ) return NULL;
@@ -25,7 +34,7 @@ int destroi_lista(lista l, int destroi(void *)) {
     if ( destroi ) ok &= destroi(conteudo(p));
     free(p);
   }
-  free(l);
+  if (l) free(l);
   return ok;
 }
 
@@ -63,3 +72,21 @@ int remove_no(struct lista *l, struct no *rno, int destroi(void *)) {
 	return 0;
 }
 
+lista inverte_lista(lista l) {
+    lista k = constroi_lista();
+    for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+        void *aux = conteudo(n);
+        insere_lista(aux, k);
+    }
+    destroi_lista(l, NULL);
+    return k;
+}
+
+lista copia_lista(lista l) {
+    lista k = constroi_lista();
+    for (no n = primeiro_no(l); n; n = proximo_no(n)) {
+        void *aux = conteudo(n);
+        insere_lista(aux, k);
+    }
+    return inverte_lista(k);
+}

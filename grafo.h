@@ -25,6 +25,8 @@ struct vertice {
 	int rotulo;
     int visitado;
 	int pintado;
+	int rot_pai;
+	int distancia;
 };
 
 struct adjacente {
