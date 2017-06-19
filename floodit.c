@@ -92,7 +92,6 @@ void pinta_mapa(tmapa *m, int cor) {
 }
 
 void enfila(tmapa *m, int l, int c, grafo g, vertice u) {
-	//printf("Enfila: l: %d c:%d\n", l, c);
 	int ok = 1;
 	posicao p;
 	for (no n = primeiro_no(enfilados); n && ok; n = proximo_no(n)) {
@@ -123,22 +122,13 @@ posicao desenfila(void) {
 }
 
 void vertifica(tmapa *m, vertice v, int l, int c, int cor, grafo g) {
-	//printf("Vertifica: l: %d c:%d\n", l, c);
 	if (m->mapa[l][c] < 0) {
 		int rot_atual = m->mapa[l][c];
 		no n, m;
-		/*posicao p;
-		for(n =  primeiro_no(enfilados); n; n = proximo_no(n)) {
-			p = (posicao) conteudo(n);
-			m = n;
-			remove_no(enfilados, n, NULL);
-		}*/
 		no o = busca_vertice(g, v);
 		if (o) destroi_vertice(g, o);
 		return;
 	}
-	//mostra_mapa(m);
-	//printf("\n");
 	v->area++;
 	m->mapa[l][c] = rotulo;
 	int i;
@@ -199,12 +189,6 @@ grafo map_to_graph(tmapa *m) {
 	enfila(m, 0, 0, g, NULL);
 	rotulo = -1;
 	while (tamanho_lista(enfilados) > 0) {
-		/*imprime_grafo(g);
-		for (no n =primeiro_no(enfilados); n; n = proximo_no(n)) {
-			posicao q = (posicao) conteudo(n);
-			printf("L: %d, C: %d, V->R: %d, V->C: %d\n", q->l, q->c, q->v->rotulo, q->v->cor);
-		}
-		printf("\n");*/
 		posicao p = desenfila();
 		if (g->primeiro == NULL) g->primeiro = p->v;
 		p->v->rotulo = rotulo;
@@ -320,7 +304,6 @@ static int verifica_fim(grafo g) {
 		vertice v = (vertice) conteudo(n);
 		ok &= (v->visitado == 3);
 	}
-	//printf("%s\n", ok ? "Ok" : "No");
 	return ok;
 }
 
@@ -351,7 +334,6 @@ lista guloso2 (grafo g) {
 			if (cor_vizinho1[i-1] == 1) {
 				lista pintados1 = copia_lista(pintados);
 				area_cor1[i-1] = pinta_parcial(g, pintados1, i, 1);
-				//printf("tamanho1 %d < %d\n", tamanho_lista(pintados1), tamanho_lista(g->vertices));
 				if (tamanho_lista(pintados1) < tamanho_lista(g->vertices)) {
 					for (int j = 0; j < ncores; j++) {
 						area_cor2[j] = 0;
@@ -364,7 +346,6 @@ lista guloso2 (grafo g) {
 							pintados2 = copia_lista(pintados1);
 							if (i != j) {
 								area_cor2[j-1] = pinta_parcial(g, pintados2, j, 2);
-								//printf("tamanho2 %d < %d\n", tamanho_lista(pintados2), tamanho_lista(g->vertices));
 								if (area_cor1[i-1] + area_cor2[j-1] > max) {
 									max = area_cor1[i-1] + area_cor2[j-1];
 									a_pintar[0] = i;
@@ -376,7 +357,6 @@ lista guloso2 (grafo g) {
 					}
 					if (pintados2) destroi_lista(pintados2, NULL);
 				} else {
-					//printf("No Else: cor %d\n", i);
 					a_pintar[0] = i;
 					a_pintar[1] = 0;
 					if (pintados1) destroi_lista(pintados1, NULL);
@@ -386,8 +366,6 @@ lista guloso2 (grafo g) {
 				if (pintados1) destroi_lista(pintados1, NULL);
 			}
 		}
-
-		//printf("Cores %d, %d\n", a_pintar[0], a_pintar[1]);
 		cor = malloc(sizeof(int));
 		*cor = a_pintar[0];
 		pinta_grafo(g, pintados, *cor);
@@ -398,13 +376,10 @@ lista guloso2 (grafo g) {
 		   	pinta_grafo(g, pintados, *cor);
 			insere_lista(cor, cores);
 		}
-		//printf("Pintados %d\n", tamanho_lista(pintados));
 	}
 
 	free(area_cor1);
 	free(area_cor2);
-
-	//imprime_grafo(g);
 
 	limpa_busca(g, 3);
 	return cores;

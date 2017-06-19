@@ -35,31 +35,14 @@ int main(int argc, char **argv) {
   gera_mapa(&m, semente);*/
   carrega_mapa(&m);
   grafo g = map_to_graph(&m);
-  lista l;
-  l = guloso(g);
-  l = inverte_lista(l);
-  printf("%d\n", tamanho_lista(l));
-  for (no n = primeiro_no(l); n; n = proximo_no(n)) {
-	int *aux =  (int *)  conteudo(n);
-	printf("%d ", *aux);
-	free(aux);
-  }
-  printf("\n");
-  destroi_lista(l, NULL);
+  lista l2, l3;
 
-  l = guloso2(g);
-  l = inverte_lista(l);
-  printf("%d\n", tamanho_lista(l));
-  for (no n = primeiro_no(l); n; n = proximo_no(n)) {
-	int *aux =  (int *)  conteudo(n);
-	printf("%d ", *aux);
-	free(aux);
-  }
-  printf("\n");
-  destroi_lista(l, NULL);
+  l2 = guloso2(g);
+  l2 = inverte_lista(l2);
+  l3 = guloso3(g);
+  l3 = inverte_lista(l3);
 
-  l = guloso3(g);
-  l = inverte_lista(l);
+  lista l = (tamanho_lista(l2) < tamanho_lista(l3)) ? l2 : l3;
   printf("%d\n", tamanho_lista(l));
   for (no n = primeiro_no(l); n; n = proximo_no(n)) {
 	int *aux =  (int *)  conteudo(n);
@@ -67,7 +50,8 @@ int main(int argc, char **argv) {
 	free(aux);
   }
   printf("\n");
-  destroi_lista(l, NULL);
+  destroi_lista(l2, NULL);
+  destroi_lista(l3, NULL);
 
   destroi_grafo(g);
   return 0;
